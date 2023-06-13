@@ -1,0 +1,682 @@
+*************
+P1-Feed-forward Neural Network and train the network 
+
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras import backend as K
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+------------------------------
+print("[INFO] accessing MNIST...")
+((trainX, trainY), (testX, testY)) = mnist.load_data()
+trainX = trainX.reshape((trainX.shape[0], 28 * 28 * 1))
+testX = testX.reshape((testX.shape[0], 28 * 28 * 1))
+trainX = trainX.astype("float32") / 255.0
+testX = testX.astype("float32") / 255.0
+--------------------------------
+lb = LabelBinarizer()
+trainY = lb.fit_transform(trainY)
+testY = lb.transform(testY)
+
+model = Sequential()
+model.add(Dense(256, input_shape=(784,), activation="sigmoid"))
+model.add(Dense(128, activation="sigmoid"))
+model.add(Dense(10, activation="softmax"))
+---------------------------------------
+sgd = SGD(0.01)
+model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+H = model.fit(trainX, trainY, validation_data=(testX, testY), epochs=100, batch_size=128)
+
+--------------------------------------------
+print("[INFO] evaluating network...")
+predictions = model.predict(testX, batch_size=128)
+print(classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=[str(x) for x in lb.classes_]))
+
+-------------------------------------------
+code2
+
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.datasets import cifar10
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+---------------------------------------------------
+print("[INFO] loading CIFAR-10 data...")
+((trainX, trainY), (testX, testY)) = cifar10.load_data()
+trainX = trainX.astype("float") / 255.0
+testX = testX.astype("float") / 255.0
+trainX = trainX.reshape((trainX.shape[0], 3072))
+testX = testX.reshape((testX.shape[0], 3072))
+-------------------------------------
+
+lb = LabelBinarizer()
+trainY = lb.fit_transform(trainY)
+testY = lb.transform(testY)
+labelNames = ["airplane", "automobile", "bird", "cat", "deer","dog", "frog", "horse", "ship", "truck"]
+
+------------------------
+model = Sequential()
+model.add(Dense(1024, input_shape=(3072,), activation="relu"))
+model.add(Dense(512, activation="relu"))
+model.add(Dense(10, activation="softmax"))
+----------------------------
+print("[INFO] training network...")
+sgd = SGD(0.01)
+model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+H = model.fit(trainX, trainY, validation_data=(testX, testY), epochs=100, batch_size=32)
+
+-----------------------------------
+print("[INFO] evaluating network...")
+predictions = model.predict(testX, batch_size=32)
+print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1), target_names=labelNames))
+
+----------------------------------
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(np.arange(0, 100), H.history["loss"], label="train_loss")
+plt.plot(np.arange(0, 100), H.history["val_loss"], label="val_loss")
+plt.plot(np.arange(0, 100), H.history["accuracy"], label="train_acc")
+plt.plot(np.arange(0, 100), H.history["val_accuracy"], label="val_acc")
+plt.title("Training Loss and Accuracy")
+plt.xlabel("Epoch #")
+plt.ylabel("Loss/Accuracy")
+plt.legend()
+
+-----------------------------------
+Code3
+
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import classification_report
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.datasets import cifar10
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+
+------------------------------
+print("[INFO] loading CIFAR-10 data...")
+((trainX, trainY), (testX, testY)) = cifar10.load_data()
+trainX = trainX.astype("float") / 255.0
+testX = testX.astype("float") / 255.0
+trainX = trainX.reshape((trainX.shape[0], 3072))
+testX = testX.reshape((testX.shape[0], 3072))
+------------------
+lb = LabelBinarizer()
+trainY = lb.fit_transform(trainY)
+testY = lb.transform(testY)
+
+labelNames = ["airplane", "automobile", "bird", "cat", "deer",
+  "dog", "frog", "horse", "ship", "truck"]
+----------------------------
+model = Sequential()
+model.add(Dense(1024, input_shape=(3072,), activation="relu"))
+model.add(Dense(512, activation="relu"))
+model.add(Dense(10, activation="softmax"))
+---------------------
+print("[INFO] training network...")
+sgd = SGD(0.01)
+model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
+H = model.fit(trainX, trainY, validation_data=(testX, testY), epochs=100, batch_size=32)
+--------------------
+print("[INFO] evaluating network...")
+predictions = model.predict(testX, batch_size=32)
+print(classification_report(testY.argmax(axis=1),
+  predictions.argmax(axis=1), target_names=labelNames))
+--------------------------
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(np.arange(0, 100), H.history["loss"], label="train_loss")
+plt.plot(np.arange(0, 100), H.history["val_loss"], label="val_loss")
+plt.plot(np.arange(0, 100), H.history["accuracy"], label="train_acc")
+plt.plot(np.arange(0, 100), H.history["val_accuracy"], label="val_acc")
+plt.title("Training Loss and Accuracy")
+plt.xlabel("Epoch #")
+plt.ylabel("Loss/Accuracy")
+plt.legend()
+plt.savefig(args["output"])
+------------------------------
+
+*************************************************************
+
+
+P2-Aim: Regulariztion&OVerfitting
+
+import numpy as np
+import pandas as pd
+from sklearn import metrics
+from sklearn.linear_model import Lasso
+
+df_train = pd.read_csv('train.csv')
+df_test = pd.read_csv('test.csv')
+
+df_train = df_train.dropna()
+df_test = df_test.dropna()
+
+x_train = df_train['x']
+x_train = x_train.values.reshape(-1,1)
+y_train = df_train['y']
+y_train = y_train.values.reshape(-1,1)
+
+x_test = df_test['x']
+x_test = x_test.values.reshape(-1,1)
+y_test = df_test['y']
+y_test = y_test.values.reshape(-1,1)
+
+lasso = Lasso()
+
+lasso.fit(x_train, y_train)
+
+------------------------
+print("Lasso Train RMSE:", np.round(np.sqrt(metrics.mean_squared_error(y_train, lasso.predict(x_train))), 5))
+print("Lasso Test RMSE:", np.round(np.sqrt(metrics.mean_squared_error(y_test, lasso.predict(x_test))), 5))
+
+------------
+
+import numpy as np
+import pandas as pd
+from sklearn import metrics
+from sklearn.linear_model import Ridge
+
+df_train = pd.read_csv('train.csv')
+df_test = pd.read_csv('test.csv')
+
+df_train = df_train.dropna()
+df_test = df_test.dropna()
+
+x_train = df_train['x']
+x_train = x_train.values.reshape(-1,1)
+y_train = df_train['y']
+y_train = y_train.values.reshape(-1,1)
+
+x_test = df_test['x']
+x_test = x_test.values.reshape(-1,1)
+y_test = df_test['y']
+y_test = y_test.values.reshape(-1,1)
+
+ridge = Ridge()
+
+ridge.fit(x_train, y_train)
+print("Ridge Train RMSE:", np.round(np.sqrt(metrics.mean_squared_error(y_train, ridge.predict(x_train))), 5))
+print("Ridge Test RMSE:", np.round(np.sqrt(metrics.mean_squared_error(y_test, ridge.predict(x_test))), 5))
+---------------------------
+
+*********************************************
+P3-CIFAR-10 
+
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+import matplotlib.pyplot as plt
+import numpy as np
+
+(X_train, y_train), (X_test,y_test) = datasets.cifar10.load_data()
+X_train.shape
+--------------
+X_test.shape
+---------------
+y_train.shape
+---------------
+y_train[:5]
+------------------
+y_train = y_train.reshape(-1,)
+y_train[:5]
+--------------------
+y_test = y_test.reshape(-1,)
+
+classes = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
+
+def plot_sample(X, y, index):
+    plt.figure(figsize = (15,2))
+    plt.imshow(X[index])
+    plt.xlabel(classes[y[index]])
+
+plot_sample(X_train, y_train, 0)
+-------------------------------
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+
+ann = models.Sequential([
+        layers.Flatten(input_shape=(32,32,3)),
+        layers.Dense(3000, activation='relu'),
+        layers.Dense(1000, activation='relu'),
+        layers.Dense(10, activation='softmax')    
+    ])
+
+ann.compile(optimizer='SGD',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+ann.fit(X_train, y_train, epochs=5)
+
+---------------------------------
+from sklearn.metrics import confusion_matrix , classification_report
+import numpy as np
+y_pred = ann.predict(X_test)
+y_pred_classes = [np.argmax(element) for element in y_pred]
+
+-------------------------------
+print("Classification Report: \n", classification_report(y_test, y_pred_classes))
+----------------------------
+
+cnn = models.Sequential([
+    layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')
+])
+
+cnn.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+cnn.fit(X_train, y_train, epochs=10)
+
+------------------------------------------------
+cnn.evaluate(X_test,y_test)
+------------------------------------
+y_pred = cnn.predict(X_test)
+y_pred[:5]
+------------------------------
+y_classes = [np.argmax(element) for element in y_pred]
+y_classes[:5]
+---------------------------------
+y_test[:5]
+---------------------------------
+plot_sample(X_test, y_test,3)
+-------------------------------
+classes[y_classes[3]]
+--------------------------
+classes[y_classes[3]]
+
+*****************************************************
+
+P-4 autoencoder from the test data (e.g. MNIST data set)
+
+import tensorflow.keras as keras
+
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.layers import Dense, Input, Flatten,\
+                                    Reshape, LeakyReLU as LR,\
+                                    Activation, Dropout
+from tensorflow.keras.models import Model, Sequential
+from matplotlib import pyplot as plt
+from IPython import display # If using IPython, Colab or Jupyter
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+x_train = x_train/255.0
+x_test = x_test/255.0
+
+# Plot image data from x_train
+plt.imshow(x_train[0], cmap = "gray")
+plt.show()
+
+---------------------------------------
+LATENT_SIZE = 32
+
+encoder = Sequential([Flatten(input_shape = (28, 28)),Dense(512),LR(),Dropout(0.5),Dense(256),LR(),Dropout(0.5),Dense(128),
+    LR(),Dropout(0.5),Dense(64),LR(),Dropout(0.5),Dense(LATENT_SIZE),LR()])
+
+decoder = Sequential([Dense(64, input_shape = (LATENT_SIZE,)),LR(),Dropout(0.5),Dense(128),LR(),Dropout(0.5),Dense(256),
+    LR(),Dropout(0.5),Dense(512),LR(),Dropout(0.5),Dense(784),Activation("sigmoid"),Reshape((28, 28))])
+
+img = Input(shape = (28, 28))
+
+latent_vector = encoder(img)
+output = decoder(latent_vector)
+
+model = Model(inputs = img, outputs = output)
+model.compile("nadam", loss = "binary_crossentropy")
+
+EPOCHS = 60
+
+for epoch in range(EPOCHS):
+    fig, axs = plt.subplots(4, 4)
+    rand = x_test[np.random.randint(0, 10000, 16)].reshape((4, 4, 1, 28, 28))
+    
+    display.clear_output() # If you imported display from IPython
+    
+    for i in range(4):
+        for j in range(4):
+            axs[i, j].imshow(model.predict(rand[i, j])[0], cmap = "gray")
+            axs[i, j].axis("off")
+    
+    plt.subplots_adjust(wspace = 0, hspace = 0)
+    plt.show()
+    print("-----------", "EPOCH", epoch, "-----------")
+    model.fit(x_train, x_train)
+
+----------------------------------------
+********************************************************************
+
+P-5 Convolutional Neural Network for Digit Recognition on the MNIST Dataset.
+
+from numpy import mean
+from numpy import std
+from matplotlib import pyplot as plt
+from sklearn.model_selection import KFold
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.optimizers import SGD
+
+# load train and test dataset
+def load_dataset():
+ # load dataset
+ (trainX, trainY), (testX, testY) = mnist.load_data()
+ # reshape dataset to have a single channel
+ trainX = trainX.reshape((trainX.shape[0], 28, 28, 1))
+ testX = testX.reshape((testX.shape[0], 28, 28, 1))
+ # one hot encode target values
+ trainY = to_categorical(trainY)
+ testY = to_categorical(testY)
+ return trainX, trainY, testX, testY
+
+
+# scale pixels
+def prep_pixels(train, test):
+ # convert from integers to floats
+ train_norm = train.astype('float32')
+ test_norm = test.astype('float32')
+ # normalize to range 0-1
+ train_norm = train_norm / 255.0
+ test_norm = test_norm / 255.0
+ # return normalized images
+ return train_norm, test_norm
+# define cnn model
+def define_model():
+ model = Sequential()
+ model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', input_shape=(28, 28, 1)))
+ model.add(MaxPooling2D((2, 2)))
+ model.add(Flatten())
+ model.add(Dense(100, activation='relu', kernel_initializer='he_uniform'))
+ model.add(Dense(10, activation='softmax'))
+ # compile model
+ opt = SGD(learning_rate=0.01, momentum=0.9)
+ model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+ return model
+
+
+# evaluate a model using k-fold cross-validation
+def evaluate_model(dataX, dataY, n_folds=5):
+ scores, histories = list(), list()
+ # prepare cross validation
+ kfold = KFold(n_folds, shuffle=True, random_state=1)
+ # enumerate splits
+ for train_ix, test_ix in kfold.split(dataX):
+ # define model
+  model = define_model()
+ # select rows for train and test
+  trainX, trainY, testX, testY = dataX[train_ix], dataY[train_ix], dataX[test_ix], dataY[test_ix]
+ # fit model
+  history = model.fit(trainX, trainY, epochs=10, batch_size=32, validation_data=(testX, testY), verbose=0)
+ # evaluate model
+  _, acc = model.evaluate(testX, testY, verbose=0)
+  print('> %.3f' % (acc * 100.0))
+ # stores scores
+ scores.append(acc)
+ histories.append(history)
+ return scores, histories
+
+
+def summarize_diagnostics(histories):
+ for i in range(len(histories)):
+   plt.subplot(2, 1, 1)
+   plt.title('Cross Entropy Loss')
+   plt.plot(histories[i].history['loss'], color='blue', label='train')
+   plt.plot(histories[i].history['val_loss'], color='orange', label='test')
+   # plot accuracy
+   plt.subplot(2, 1, 2)
+   plt.title('Classification Accuracy')
+   plt.plot(histories[i].history['accuracy'], color='blue', label='train')
+   plt.plot(histories[i].history['val_accuracy'], color='orange', label='test')
+   plt.show()
+# summarize model performance
+def summarize_performance(scores):
+ # print summary
+ print('Accuracy: mean=%.3f std=%.3f, n=%d' % (mean(scores)*100, std(scores)*100, len(scores)))
+ # box and whisker plots of results
+ plt.boxplot(scores)
+ plt.show()
+def run_test_harness():
+ # load dataset
+ trainX, trainY, testX, testY = load_dataset()
+ # prepare pixel data
+ trainX, testX = prep_pixels(trainX, testX)
+ # evaluate model
+ scores, histories = evaluate_model(trainX, trainY)
+ # learning curves
+ summarize_diagnostics(histories)
+ # summarize estimated performance
+ summarize_performance(scores)
+
+run_test_harness()
+
+---------------------------------------------------------------------
+***************************************************************************************
+
+P-6 Generative Adversarial Network for generating synthetic shapes (like digits).
+
+from numpy import expand_dims
+from numpy import ones
+from numpy import zeros
+from numpy.random import rand
+from numpy.random import randint
+from keras.datasets.mnist import load_data
+from keras.optimizers import Adam
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Conv2D
+from keras.layers import Flatten
+from keras.layers import Dropout
+from keras.layers import LeakyReLU
+
+def define_discriminator(in_shape=(28,28,1)):
+ model = Sequential()
+ model.add(Conv2D(64, (3,3), strides=(2, 2), padding='same', input_shape=in_shape))
+ model.add(LeakyReLU(alpha=0.2))
+ model.add(Dropout(0.4))
+ model.add(Conv2D(64, (3,3), strides=(2, 2), padding='same'))
+ model.add(LeakyReLU(alpha=0.2))
+ model.add(Dropout(0.4))
+ model.add(Flatten())
+ model.add(Dense(1, activation='sigmoid'))
+ opt = Adam(lr=0.0002, beta_1=0.5)
+ model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
+ return model
+
+def load_real_samples():
+ (trainX, _), (_, _) = load_data()
+ X = expand_dims(trainX, axis=-1)
+ X = X.astype('float32')
+ X = X / 255.0
+ return X
+
+def generate_real_samples(dataset, n_samples):
+ ix = randint(0, dataset.shape[0], n_samples)
+ X = dataset[ix]
+ y = ones((n_samples, 1))
+ return X, y
+
+def generate_fake_samples(n_samples):
+ X = rand(28 * 28 * n_samples)
+ X = X.reshape((n_samples, 28, 28, 1))
+ y = zeros((n_samples, 1))
+ return X, y
+
+def train_discriminator(model, dataset, n_iter=100, n_batch=256):
+ half_batch = int(n_batch / 2)
+ for i in range(n_iter):
+  X_real, y_real = generate_real_samples(dataset, half_batch)
+  _, real_acc = model.train_on_batch(X_real, y_real)
+  X_fake, y_fake = generate_fake_samples(half_batch)
+  _, fake_acc = model.train_on_batch(X_fake, y_fake)
+  print('>%d real=%.0f%% fake=%.0f%%' % (i+1, real_acc*100, fake_acc*100))
+
+model = define_discriminator()
+dataset = load_real_samples()
+train_discriminator(model, dataset)
+
+---------------------------------------------
+***************************************************************
+
+P-7 object detection from the image/video.
+
+import cv2
+from google.colab.patches import cv2_imshow
+image = cv2.imread('examples/image3.jpg')
+image = cv2.resize(image, (640, 480))
+h = image.shape[0]
+w = image.shape[1]
+weights = "ssd_mobilenet/frozen_inference_graph.pb"
+model = "ssd_mobilenet/ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
+net = cv2.dnn.readNetFromTensorflow(weights, model)
+class_names = []
+with open("ssd_mobilenet/coco_names.txt", "r") as f:
+    class_names = f.read().strip().split("\n")
+blob = cv2.dnn.blobFromImage(
+    image, 1.0/127.5, (320, 320), [127.5, 127.5, 127.5])
+net.setInput(blob)
+output = net.forward()  # shape: (1, 1, 100, 7)
+for detection in output[0, 0, :, :]:  # output[0, 0, :, :] has a shape of: (100, 7)
+    probability = detection[2]
+    if probability < 0.5:
+        continue
+    box = [int(a * b) for a, b in zip(detection[3:7], [w, h, w, h])]
+    box = tuple(box)
+    cv2.rectangle(image, box[:2], box[2:], (0, 255, 0), thickness=2)
+    class_id = int(detection[1])
+    label = f"{class_names[class_id - 1].upper()} {probability * 100:.2f}%"
+    cv2.putText(image, label, (box[0], box[1] + 15),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+cv2_imshow(image)
+cv2.waitKey()
+
+--------------------------------------
+import numpy as np
+import cv2
+import datetime
+from google.colab.patches import cv2_imshow
+video_cap = cv2.VideoCapture("examples/video1.mp4")
+frame_width = int(video_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(video_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = int(video_cap.get(cv2.CAP_PROP_FPS))
+fourcc = cv2.VideoWriter_fourcc(*"XVID")
+writer = cv2.VideoWriter("output.mp4", fourcc, fps, (frame_width, frame_height))
+weights = "ssd_mobilenet/frozen_inference_graph.pb"
+model = "ssd_mobilenet/ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
+net = cv2.dnn.readNetFromTensorflow(weights, model)
+class_names = []
+with open("ssd_mobilenet/coco_names.txt", "r") as f:
+    class_names = f.read().strip().split("\n")
+np.random.seed(42)
+colors = np.random.randint(0, 255, size=(len(class_names), 3))
+video_cap.release()
+writer.release()
+cv2.destroyAllWindows()
+
+---------
+**************************************************************
+
+P-8 object detection using pre-trained models 
+
+import torch
+import torchvision
+import pycocotools
+from PIL import Image
+holiday = Image.open("2.jpg")
+holiday = Image.open("2.jpg")
+holiday
+_------------------
+kids_playing = Image.open("1.jpg")
+kids_playing
+----------------------------
+from torchvision.transforms.functional import pil_to_tensor
+holiday_tensor_int = pil_to_tensor(holiday)
+kids_playing_tensor_int = pil_to_tensor(kids_playing)
+holiday_tensor_int.shape, kids_playing_tensor_int.shape
+holiday_tensor_int = holiday_tensor_int.unsqueeze(dim=0)
+kids_playing_tensor_int = kids_playing_tensor_int.unsqueeze(dim=0)
+holiday_tensor_int.shape, kids_playing_tensor_int.shape
+---------------------------------
+print(holiday_tensor_int.min(), holiday_tensor_int.max())
+--------------
+holiday_tensor_float = holiday_tensor_int / 255.0
+kids_playing_tensor_float = kids_playing_tensor_int / 255.0
+print(holiday_tensor_float.min(), holiday_tensor_float.max())
+--------------------------
+from torchvision.models.detection import fasterrcnn_resnet50_fpn
+object_detection_model = fasterrcnn_resnet50_fpn(pretrained=True, progress=False)
+object_detection_model.eval(); ## Setting Model for Evaluation/Prediction
+holiday_preds = object_detection_model(holiday_tensor_float)
+holiday_preds
+holiday_preds[0]["boxes"] = holiday_preds[0]["boxes"][holiday_preds[0]["scores"] > 0.8]
+holiday_preds[0]["labels"] = holiday_preds[0]["labels"][holiday_preds[0]["scores"] > 0.8]
+holiday_preds[0]["scores"] = holiday_preds[0]["scores"][holiday_preds[0]["scores"] > 0.8]
+holiday_preds
+---------------------------
+kids_preds = object_detection_model(kids_playing_tensor_float)
+kids_preds
+kids_preds[0]["boxes"] = kids_preds[0]["boxes"][kids_preds[0]["scores"] > 0.8]
+kids_preds[0]["labels"] = kids_preds[0]["labels"][kids_preds[0]["scores"] > 0.8]
+kids_preds[0]["scores"] = kids_preds[0]["scores"][kids_preds[0]["scores"] > 0.8]
+kids_preds
+--------------------
+from pycocotools.coco import COCO
+annFile='instances_val2017.json'
+coco=COCO(annFile)
+-----------------------
+holiday_labels = coco.loadCats(holiday_preds[0]["labels"].numpy())
+holiday_labels
+-------------------
+kids_labels = coco.loadCats(kids_preds[0]["labels"].numpy())
+kids_labels
+-----------------------
+from torchvision.utils import draw_bounding_boxes
+holiday_annot_labels = ["{}-{:.2f}".format(label["name"], prob) for label, prob in zip(holiday_labels, holiday_preds[0]["scores"].detach().numpy())]
+holiday_output = draw_bounding_boxes(image=holiday_tensor_int[0],
+                             boxes=holiday_preds[0]["boxes"],
+                             labels=holiday_annot_labels,
+                             colors=["red" if label["name"]=="person" else "green" for label in holiday_labels],
+                             width=2
+                            )
+
+holiday_output.shape
+-----------------------------
+from torchvision.transforms.functional import to_pil_image
+to_pil_image(holiday_output)
+------------------------------
+from torchvision.utils import draw_bounding_boxes
+kids_annot_labels = ["{}-{:.2f}".format(label["name"], prob) for label, prob in zip(kids_labels, kids_preds[0]["scores"].detach().numpy())]
+kids_output = draw_bounding_boxes(image=kids_playing_tensor_int[0],
+                             boxes=kids_preds[0]["boxes"],
+                             labels=kids_annot_labels,
+                             colors=["red" if label["name"]=="person" else "green" for label in kids_labels],
+                             width=2,
+                             font_size=16,
+                             fill=True
+                            )
+to_pil_image(kids_output)
+-----------------------------
+************************************************
+
+
